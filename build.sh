@@ -17,4 +17,4 @@ make clean && \
 	cd "${OBJECTDIR}" && \
 	ar -xv "${CURDIR}/target/x86_64-kernel-freebsd/debug/lib${MODULE_NAME}.a" && \
 	cd "${CURDIR}" && \
-	make OBJECTDIR="${OBJECTDIR}"
+	make OBJECTDIR="${OBJECTDIR}" _ABSOLUTE_PATH_OBJS=${OBJECTDIR}/*.o
