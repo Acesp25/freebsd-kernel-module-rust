@@ -1,11 +1,11 @@
 ## FreeBSD kernel module in Rust
 
-This repo is a fork of  https://github.com/nccgroup/freebsd-kernel-module-rust
-It will be used as a foundation for my GSoC project and hopefully any future kernel level rust contributions to FreeBSD. I am updating it and changing what I need to ensure this works with current FreeBSD patches.
+This repo is a fork of  https://github.com/nccgroup/freebsd-kernel-module-rust.
+It will be used as an example for my GSoC project and possibly any future kernel level rust projects for FreeBSD. I am updating it when needed to ensure this works with current FreeBSD patches.
 
 ### Setup
 * Install Rust via Rustup
-* Be sure to have llvm15 installed, llvm17 or newer will not work (at least it didnt for me)
+* Be sure to have llvm15 installed, llvm17 or newer will not work (at least it didn't for me)
 * Ensure to write `rustup component add rust-src` to your terminal
 * Generate the kernel bindings:
 ```bash
