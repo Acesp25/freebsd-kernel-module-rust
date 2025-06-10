@@ -26,6 +26,7 @@
 use crate::cstr_ref;
 use crate::module::SharedModule;
 use crate::uio::{UioReader, UioWriter};
+use crate::io::Error;
 use alloc::boxed::Box;
 use core::prelude::v1::*;
 use core::{fmt, mem, ptr};
@@ -70,7 +71,7 @@ pub trait CharacterDevice {
     fn open(&mut self);
     fn close(&mut self);
     fn read(&mut self, uio: &mut UioWriter);
-    fn write(&mut self, uio: &mut UioReader);
+    fn write(&mut self, uio: &mut UioReader) -> Result<(), Error>;
 }
 
 pub struct CDev<T>
@@ -230,10 +231,14 @@ extern "C" fn cdev_write<T>(
 where
     T: CharacterDevice,
 {
+    let mut error = 0;
+
     // debugln!("cdev_write");
     let cdev: &CDev<T> = unsafe { &*((*dev).si_drv1 as *const CDev<T>) };
     if let Some(mut m) = cdev.delegate.lock() {
-        m.write(unsafe { &mut UioReader::new(uio) });
+        if let Err(_) = m.write(unsafe { &mut UioReader::new(uio) }) {
+            error = -1;
+        }
     }
-    0
+    error
 }
