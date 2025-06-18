@@ -27,7 +27,7 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use bsd_kernel::character_device::{CDev, CharacterDevice};
 use bsd_kernel::debugln;
-use bsd_kernel::io::{Read, Write};
+use bsd_kernel::io::{Read, Write, Error};
 use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
 use lazy_static::lazy_static;
@@ -47,8 +47,7 @@ pub struct HelloInner {
 #[derive(Default, Debug)]
 pub struct Hello {
     // Put everything in an option so that SharedModule<Hello> can be
-    // fully initialised before we start doing stuff in module load
-    // callback. (we can't for example clone MODULE while in
+    // fully initialised before we start doing stuff in module load callback. (we can't for example clone MODULE while in
     // Hello::new() because of order of initialisation)
     inner: Option<HelloInner>,
 }
@@ -101,7 +100,7 @@ impl CharacterDevice for Hello {
             }
         }
     }
-    fn write(&mut self, uio: &mut UioReader) {
+    fn write(&mut self, uio: &mut UioReader) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::write");
         if let Some(ref mut inner) = self.inner {
             inner.data.clear();
@@ -111,11 +110,16 @@ impl CharacterDevice for Hello {
                         "Read {} bytes. Setting new message to `{}`",
                         x,
                         inner.data
-                    )
+                    );
+                    return Ok(());
                 }
-                Err(e) => debugln!("{:?}", e),
+                Err(e) => {
+                    debugln!("{:?}", e);
+                    return Err(e);
+                }
             }
         }
+        Ok(())
     }
 }
 impl Drop for Hello {
