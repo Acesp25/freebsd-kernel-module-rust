@@ -3,11 +3,13 @@
 This repo is a fork of  https://github.com/nccgroup/freebsd-kernel-module-rust.
 It will be used as an example for my GSoC project and possibly any future kernel level rust projects for FreeBSD. I am updating it when needed to ensure this works with current FreeBSD patches.
 
+This has been tested with 1.90.0-nightly (667787527 2025-07-02)
+
 ### Setup
 * Install Rust via Rustup
-* Be sure to have llvm15 installed, llvm17 or newer will not work (at least it didn't for me)
-* Ensure to write `rustup component add rust-src` to your terminal
-* Generate the kernel bindings:
+* Install llvm19
+* Do `rustup component add rust-src`
+* Generate the kernel bindings by doing:
 ```bash
 cargo build -p kernel-sys --target x86_64-unknown-freebsd
 ```

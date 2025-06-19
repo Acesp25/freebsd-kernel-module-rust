@@ -27,10 +27,12 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use bsd_kernel::character_device::{CDev, CharacterDevice};
 use bsd_kernel::debugln;
+use bsd_kernel::kernel_sys;
 use bsd_kernel::io::{Read, Write, Error};
 use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
 use lazy_static::lazy_static;
+use libc::EBUSY;
 
 lazy_static! {
     // Object created on first access (which is module load callback)
@@ -60,7 +62,7 @@ impl Hello {
 
 impl ModuleEvents for Hello {
     fn load(&mut self) {
-        debugln!("[module.rs] Hello::load");
+        //debugln!("[module.rs] Hello::load");
 
         // MODULE has been fully initialised here
         // so we can clone it safely
@@ -79,7 +81,18 @@ impl ModuleEvents for Hello {
     }
 
     fn unload(&mut self) {
-        debugln!("[module.rs] Hello::unload");
+        //debugln!("[module.rs] Hello::unload");
+    }
+
+    fn quiesce(&mut self) -> i32 {
+        //debugln!("[module.rs] Hello:quiesce{}", EBUSY);
+        let mut error = 0;
+        if let Some(ref mut inner) = self.inner { 
+            if inner._cdev.get_usecount() > 0 {
+                error = EBUSY;
+            }
+        }
+        error
     }
 }
 
@@ -90,15 +103,19 @@ impl CharacterDevice for Hello {
     fn close(&mut self) {
         // debugln!("[module.rs] Hello::close");
     }
-    fn read(&mut self, uio: &mut UioWriter) {
+    fn read(&mut self, uio: &mut UioWriter) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::read");
 
         if let Some(ref h) = self.inner {
             match uio.write_all(&h.data.as_bytes()) {
-                Ok(()) => (),
-                Err(e) => debugln!("{}", e),
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    debugln!("{}", e);
+                    return Err(e);
+                }
             }
         }
+        Ok(())
     }
     fn write(&mut self, uio: &mut UioReader) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::write");

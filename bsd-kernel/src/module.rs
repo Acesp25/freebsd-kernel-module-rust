@@ -85,6 +85,8 @@ pub trait ModuleEvents {
     fn load(&mut self);
     /// Function called when the module is unloaded
     fn unload(&mut self);
+    /// Function called when soft unloaded 
+    fn quiesce(&mut self) -> i32;
 }
 
 pub struct LockedModule<'a, T: Sized + 'a> {
