@@ -90,15 +90,19 @@ impl CharacterDevice for Hello {
     fn close(&mut self) {
         // debugln!("[module.rs] Hello::close");
     }
-    fn read(&mut self, uio: &mut UioWriter) {
+    fn read(&mut self, uio: &mut UioWriter) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::read");
 
         if let Some(ref h) = self.inner {
             match uio.write_all(&h.data.as_bytes()) {
-                Ok(()) => (),
-                Err(e) => debugln!("{}", e),
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    debugln!("{}", e);
+                    return Err(e);
+                }
             }
         }
+        Ok(())
     }
     fn write(&mut self, uio: &mut UioReader) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::write");

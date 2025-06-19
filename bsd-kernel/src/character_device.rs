@@ -30,7 +30,7 @@ use crate::io::Error;
 use alloc::boxed::Box;
 use core::prelude::v1::*;
 use core::{fmt, mem, ptr};
-use libc::c_int;
+use libc::{c_int, EFAULT};
 
 /// ```c,ignore
 /// /*
@@ -70,7 +70,7 @@ use libc::c_int;
 pub trait CharacterDevice {
     fn open(&mut self);
     fn close(&mut self);
-    fn read(&mut self, uio: &mut UioWriter);
+    fn read(&mut self, uio: &mut UioWriter) -> Result<(), Error>;
     fn write(&mut self, uio: &mut UioReader) -> Result<(), Error>;
 }
 
@@ -215,12 +215,15 @@ extern "C" fn cdev_read<T>(
 where
     T: CharacterDevice,
 {
+    let mut error = 0;
     // debugln!("cdev_read");
     let cdev: &CDev<T> = unsafe { &*((*dev).si_drv1 as *const CDev<T>) };
     if let Some(mut m) = cdev.delegate.lock() {
-        m.read(&mut UioWriter::new(uio));
+        if let Err(_) = m.read(&mut UioWriter::new(uio)) {
+            error = EFAULT;
+        }
     }
-    0
+    error
 }
 
 extern "C" fn cdev_write<T>(
@@ -237,7 +240,7 @@ where
     let cdev: &CDev<T> = unsafe { &*((*dev).si_drv1 as *const CDev<T>) };
     if let Some(mut m) = cdev.delegate.lock() {
         if let Err(_) = m.write(unsafe { &mut UioReader::new(uio) }) {
-            error = -1;
+            error = EFAULT;
         }
     }
     error
