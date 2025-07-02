@@ -127,10 +127,7 @@ where
                     (*cdev_raw).si_drv1 =
                         &*cdev as *const CDev<T> as *mut libc::c_void
                 };
-                unsafe {
-                    let cdev_ptr: *mut kernel_sys::cdev = cdev.cdev.as_ptr();
-                    kernel_sys::dev_ref(cdev_ptr);
-                }
+
                 Some(cdev)
             }
         }
@@ -160,11 +157,6 @@ where
         let _cdevsw: Box<kernel_sys::cdevsw> =
             unsafe { Box::from_raw((*dev).si_devsw) };
 
-        // Call dev_rel to release driver from devfs
-        unsafe {
-            kernel_sys::dev_rel(dev);
-        }
-
         // debugln!("[kernel.rs] CDev::drop calling destroy_dev. ptr={:?}", dev.as_ptr());
         unsafe { kernel_sys::destroy_dev(dev) };
     }
@@ -184,6 +176,10 @@ where
     let cdev: &CDev<T> = unsafe { &*((*dev).si_drv1 as *const CDev<T>) };
     if let Some(mut m) = cdev.delegate.lock() {
         m.open();
+    }
+    let cdev_ptr: *mut kernel_sys::cdev = cdev.cdev.as_ptr();
+    unsafe {
+        kernel_sys::dev_ref(cdev_ptr);
     }
     0
 }
@@ -212,6 +208,10 @@ where
     let cdev: &CDev<T> = unsafe { &*((*dev).si_drv1 as *const CDev<T>) };
     if let Some(mut m) = cdev.delegate.lock() {
         m.close();
+    }
+    let cdev_ptr: *mut kernel_sys::cdev = cdev.cdev.as_ptr();
+    unsafe { 
+        kernel_sys::dev_rel(cdev_ptr);
     }
     0
 }
