@@ -127,6 +127,10 @@ where
                     (*cdev_raw).si_drv1 =
                         &*cdev as *const CDev<T> as *mut libc::c_void
                 };
+                unsafe {
+                    let cdev_ptr: *mut kernel_sys::cdev = cdev.cdev.as_ptr();
+                    kernel_sys::dev_ref(cdev_ptr);
+                }
                 Some(cdev)
             }
         }
@@ -155,6 +159,11 @@ where
         // Back to Box so cdevsw memory is freed
         let _cdevsw: Box<kernel_sys::cdevsw> =
             unsafe { Box::from_raw((*dev).si_devsw) };
+
+        // Call dev_rel to release driver from devfs
+        unsafe {
+            kernel_sys::dev_rel(dev);
+        }
 
         // debugln!("[kernel.rs] CDev::drop calling destroy_dev. ptr={:?}", dev.as_ptr());
         unsafe { kernel_sys::destroy_dev(dev) };
