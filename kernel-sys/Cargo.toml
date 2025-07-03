@@ -11,4 +11,4 @@ license = "BSD-2-Clause"
 libc = { version = "0.2", default_features = false }
 
 [build-dependencies]
-bindgen = "0.60.0"
+bindgen = "0.71.1"
