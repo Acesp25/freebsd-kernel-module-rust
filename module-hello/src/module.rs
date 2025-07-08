@@ -32,7 +32,7 @@ use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
 use lazy_static::lazy_static;
 use libc::EBUSY;
-use core::sync::atomic::{AtomicU16, Ordering};
+use core::sync::atomic::{AtomicU32, Ordering};
 
 lazy_static! {
     // Object created on first access (which is module load callback)
@@ -44,7 +44,7 @@ lazy_static! {
 pub struct HelloInner {
     data: String,
     _cdev: Box<CDev<Hello>>,
-    open_count: AtomicU16,
+    open_count: AtomicU32,
 }
 
 #[derive(Default, Debug)]
@@ -73,7 +73,7 @@ impl ModuleEvents for Hello {
             self.inner = Some(HelloInner {
                 data: "Default hello message\n".to_string(),
                 _cdev: cdev,
-                open_count: AtomicU16::new(0),
+                open_count: AtomicU32::new(0),
             });
         } else {
             debugln!(
