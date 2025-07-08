@@ -75,19 +75,20 @@ pub extern "C" fn module_event(
     _arg: *mut c_void,
 ) -> c_int {
     // debugln!("[interface.rs] Got event {}", event);
+    let mut error = 0;
 
     if let Some(ev) = ModuleEventType::from_i32(event) {
         use ModuleEventType::*;
         match ev {
             Load => {
-                // debugln!("[interface.rs] MOD_LOAD");
+                //debugln!("[interface.rs] MOD_LOAD");
 
                 if let Some(mut m) = MODULE.lock() {
                     m.load();
                 }
             }
             Unload => {
-                // debugln!("[interface.rs] MOD_UNLOAD");
+                //debugln!("[interface.rs] MOD_UNLOAD");
 
                 if let Some(mut m) = MODULE.lock() {
                     m.unload();
@@ -96,7 +97,11 @@ pub extern "C" fn module_event(
                 MODULE.cleanup();
             }
             Quiesce => {
-                // debugln!("[interface.rs] MOD_QUIESCE");
+                //debugln!("[interface.rs] MOD_QUIESCE");
+                
+                if let Some(mut m) = MODULE.lock() {
+                    error = m.quiesce();
+                }
             }
             Shutdown => {
                 // debugln!("[interface.rs] MOD_SHUTDOWN");
@@ -105,5 +110,5 @@ pub extern "C" fn module_event(
     } else {
         debugln!("[interface.rs] Undefined event");
     }
-    0
+    error
 }

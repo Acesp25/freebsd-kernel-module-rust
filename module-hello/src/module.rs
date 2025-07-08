@@ -31,6 +31,7 @@ use bsd_kernel::io::{Read, Write, Error};
 use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
 use lazy_static::lazy_static;
+use libc::EBUSY;
 
 lazy_static! {
     // Object created on first access (which is module load callback)
@@ -42,6 +43,7 @@ lazy_static! {
 pub struct HelloInner {
     data: String,
     _cdev: Box<CDev<Hello>>,
+    open_count: u32,
 }
 
 #[derive(Default, Debug)]
@@ -60,7 +62,7 @@ impl Hello {
 
 impl ModuleEvents for Hello {
     fn load(&mut self) {
-        debugln!("[module.rs] Hello::load");
+        //debugln!("[module.rs] Hello::load");
 
         // MODULE has been fully initialised here
         // so we can clone it safely
@@ -70,6 +72,7 @@ impl ModuleEvents for Hello {
             self.inner = Some(HelloInner {
                 data: "Default hello message\n".to_string(),
                 _cdev: cdev,
+                open_count: 0,
             });
         } else {
             debugln!(
@@ -79,16 +82,33 @@ impl ModuleEvents for Hello {
     }
 
     fn unload(&mut self) {
-        debugln!("[module.rs] Hello::unload");
+        //debugln!("[module.rs] Hello::unload");
+    }
+
+    fn quiesce(&mut self) -> i32 {
+        //debugln!("[module.rs] Hello:quiesce{}", EBUSY);
+        let mut error = 0;
+        if let Some(ref mut inner) = self.inner { 
+            if inner.open_count > 0 {
+                error = EBUSY;
+            }
+        }
+        error
     }
 }
 
 impl CharacterDevice for Hello {
     fn open(&mut self) {
         // debugln!("[module.rs] Hello::open");
+        if let Some(ref mut inner) = self.inner { 
+            inner.open_count += 1; 
+        }
     }
     fn close(&mut self) {
         // debugln!("[module.rs] Hello::close");
+        if let Some(ref mut inner) = self.inner {
+            inner.open_count -= 1;
+        }
     }
     fn read(&mut self, uio: &mut UioWriter) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::read");
