@@ -27,12 +27,12 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use bsd_kernel::character_device::{CDev, CharacterDevice};
 use bsd_kernel::debugln;
+use bsd_kernel::kernel_sys;
 use bsd_kernel::io::{Read, Write, Error};
 use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
 use lazy_static::lazy_static;
 use libc::EBUSY;
-use core::sync::atomic::{AtomicU32, Ordering};
 
 lazy_static! {
     // Object created on first access (which is module load callback)
@@ -44,7 +44,6 @@ lazy_static! {
 pub struct HelloInner {
     data: String,
     _cdev: Box<CDev<Hello>>,
-    open_count: AtomicU32,
 }
 
 #[derive(Default, Debug)]
@@ -73,7 +72,6 @@ impl ModuleEvents for Hello {
             self.inner = Some(HelloInner {
                 data: "Default hello message\n".to_string(),
                 _cdev: cdev,
-                open_count: AtomicU32::new(0),
             });
         } else {
             debugln!(
@@ -90,8 +88,11 @@ impl ModuleEvents for Hello {
         //debugln!("[module.rs] Hello:quiesce{}", EBUSY);
         let mut error = 0;
         if let Some(ref mut inner) = self.inner { 
-            if inner.open_count.load(Ordering::Relaxed) > 0 {
-                error = EBUSY;
+            let cdev_ptr: *mut kernel_sys::cdev = inner._cdev.cdev.as_ptr();
+            unsafe {
+                if (*cdev_ptr).si_usecount > 0 {
+                    error = EBUSY;
+                }
             }
         }
         error
@@ -101,15 +102,9 @@ impl ModuleEvents for Hello {
 impl CharacterDevice for Hello {
     fn open(&mut self) {
         // debugln!("[module.rs] Hello::open");
-        if let Some(ref mut inner) = self.inner { 
-            inner.open_count.fetch_add(1, Ordering::SeqCst); 
-        }
     }
     fn close(&mut self) {
         // debugln!("[module.rs] Hello::close");
-        if let Some(ref mut inner) = self.inner {
-            inner.open_count.fetch_sub(1, Ordering::SeqCst); 
-        }
     }
     fn read(&mut self, uio: &mut UioWriter) -> Result<(), Error> {
         // debugln!("[module.rs] Hello::read");

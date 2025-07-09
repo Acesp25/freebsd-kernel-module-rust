@@ -78,7 +78,7 @@ pub struct CDev<T>
 where
     T: CharacterDevice,
 {
-    cdev: ptr::NonNull<kernel_sys::cdev>,
+    pub cdev: ptr::NonNull<kernel_sys::cdev>,
     delegate: SharedModule<T>,
 }
 
