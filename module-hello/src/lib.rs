@@ -24,7 +24,6 @@
 // Based on public domain code by Johannes Lundberg
 
 #![no_std]
-#![feature(default_alloc_error_handler)]
 
 //! Example kernel module for FreeBSD written in Rust
 //!
@@ -54,15 +53,7 @@ static ALLOCATOR: KernelAllocator = KernelAllocator;
 
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
-    if let Some(s) = info.payload().downcast_ref::<&str>() {
-        println!("Panic occurred: {}", s);
-    } else {
-        println!("Panic occurred");
-    }
-
-    if let Some(loc) = info.location() {
-        println!("Panic at line `{}` of file `{}`", loc.line(), loc.file());
-    }
+    println!("Panic occured: {}", info);
 
     loop {}
 }

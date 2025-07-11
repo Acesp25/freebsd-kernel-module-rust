@@ -36,7 +36,6 @@ fn main() {
         _ => "-I/usr/src/sys".to_string()
     };
     let bindings = Builder::default()
-        .rustfmt_bindings(true)
         .use_core()
         .ctypes_prefix("libc")
         .size_t_is_usize(true)

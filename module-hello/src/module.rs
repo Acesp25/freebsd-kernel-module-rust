@@ -27,7 +27,6 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use bsd_kernel::character_device::{CDev, CharacterDevice};
 use bsd_kernel::debugln;
-use bsd_kernel::kernel_sys;
 use bsd_kernel::io::{Read, Write, Error};
 use bsd_kernel::module::{ModuleEvents, SharedModule};
 use bsd_kernel::uio::{UioReader, UioWriter};
