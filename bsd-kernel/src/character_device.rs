@@ -78,7 +78,7 @@ pub struct CDev<T>
 where
     T: CharacterDevice,
 {
-    pub cdev: ptr::NonNull<kernel_sys::cdev>,
+    cdev: ptr::NonNull<kernel_sys::cdev>,
     delegate: SharedModule<T>,
 }
 
@@ -86,6 +86,10 @@ impl<T> CDev<T>
 where
     T: CharacterDevice,
 {
+    pub fn get_usecount(&self) -> u64 {
+        let cdev_ptr: *mut kernel_sys::cdev = self.cdev.as_ptr();
+        unsafe { (*cdev_ptr).si_usecount }
+    }
     pub fn new_with_delegate(
         name: &'static str,
         delegate: SharedModule<T>,

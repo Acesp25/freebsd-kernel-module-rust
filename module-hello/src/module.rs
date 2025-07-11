@@ -88,11 +88,8 @@ impl ModuleEvents for Hello {
         //debugln!("[module.rs] Hello:quiesce{}", EBUSY);
         let mut error = 0;
         if let Some(ref mut inner) = self.inner { 
-            let cdev_ptr: *mut kernel_sys::cdev = inner._cdev.cdev.as_ptr();
-            unsafe {
-                if (*cdev_ptr).si_usecount > 0 {
-                    error = EBUSY;
-                }
+            if inner._cdev.get_usecount() > 0 {
+                error = EBUSY;
             }
         }
         error
