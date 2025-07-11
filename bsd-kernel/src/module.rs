@@ -137,7 +137,7 @@ impl<T> SharedModule<T> {
         self.inner.clone()
     }
 
-    pub fn lock(&self) -> Option<LockedModule<T>> {
+    pub fn lock(&self) -> Option<LockedModule<'_,T>> {
         let guard = self.inner.lock();
         if guard.is_some() {
             Some(LockedModule { guard })

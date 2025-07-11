@@ -8,6 +8,8 @@ default-members = [
 	"module-hello",
 ]
 
+resolver = "2"
+
 [profile.dev]
 panic = "abort"
 
