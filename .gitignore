@@ -5,4 +5,5 @@ export_syms
 machine
 x86
 opt_global.h
+i386
 kernel-sys/src/bindings.rs
